@@ -1,0 +1,81 @@
+<html>
+
+<head>
+    <title>311 Unified Data</title>
+    <script src="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+    <style>
+        #mapid {
+            height: 360px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Austin Texas Unified 311 data</h1>
+    <p>Click an area of the map to see what service requests are made to 311 within 500 meters of that area. This data comes from the openly available dataset <a href="https://data.austintexas.gov/Government/311-Unified-Data/i26j-ai4z">311 Unified Data</a></p>
+
+    <div id="mapid"></div>
+
+
+    <script>
+        var app = angular.module('myApp', []);
+        app.controller('myCtrl', function($scope, $http) {
+            $scope.queryData = function(latitude, longitude) {
+                $http.get('https://data.austintexas.gov/resource/5h38-fd8d.json?$select=count(sr_location_lat_long),sr_type_desc&$where=within_circle(sr_location_lat_long,' + latitude + ', ' + longitude + ', ' + 500 + ')&$group=sr_type_desc&$order=count_sr_location_lat_long desc')
+                    .then(function(response) {
+                        $scope.myData = response.data;
+                    });
+            };
+        });
+
+        var mymap = L.map('mapid').setView([30.2672, -97.7431], 13);
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            maxZoom: 18,
+            id: '256',
+            //please don't use my api key for your own projects.  :)  Thank you...
+            accessToken: 'pk.eyJ1IjoidHJvbm92YW4iLCJhIjoiY2l0bGtxcXg0MDRoazJ1cGd0NW5xemgwbiJ9.HjE-IPLnd_hWE-PAhMTesQ'
+        }).addTo(mymap);
+
+
+
+
+        function onMapClick(e) {
+            // this is apparently not best practice.   
+            // is there a cleaner way to access the $scope.queryData() function 
+            // from outside my controller?
+            angular.element(document.getElementById('mydiv')).scope().queryData(e.latlng.lat, e.latlng.lng);
+
+
+        }
+
+        mymap.on('click', onMapClick);
+
+    </script>
+
+    <div ng-app="myApp" ng-controller="myCtrl" id="mydiv">
+
+        <div>
+
+            <hr>
+            <table border="1" width="100%">
+                <th>Frequency</th>
+                <th>Service Request Description</th>
+                <tr ng-repeat="d in myData">
+                    <td>{{d.count_sr_location_lat_long}}</td>
+                    <td>{{d.sr_type_desc}}</td>
+
+                </tr>
+            </table>
+            <hr>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
