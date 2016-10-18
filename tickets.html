@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <title>
+        Tickets
+    </title>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+</head>
+
+<body>
+
+    <script>
+        var app = angular.module('myApp', []);
+        app.controller('myCtrl', function($scope, $http) {
+            $scope.queryData = function() {
+                $http.get("https://data.austintexas.gov/resource/qtrw-zqpy.json?$select=count(offense_street_name),offense_charge_description&$where=offense_street_name like \'%25" + $scope.street.toUpperCase() + "%25\'&$group=offense_charge_description&$order=count(offense_street_name) desc")
+                    .then(function(response) {
+                        $scope.myData = response.data;
+                    });
+            };
+        });
+    </script>
+
+
+    <div ng-app="myApp" ng-controller="myCtrl">
+        Enter a street name:
+        <input ng-model="street" type="text">
+        <button ng-click=queryData()>Search</button>
+
+        <div>
+
+            <hr>
+            <table border="1">
+                <th>Frequency</th>
+                <th>Offense</th>
+                <tr ng-repeat="d in myData">
+                    <td>{{d.count_offense_street_name}}</td>
+                    <td>{{d.offense_charge_description}}</td>
+
+                </tr>
+            </table>
+            <hr>
+        </div>
+    </div>
+    <a href="file:///Users/dono/Downloads/Offense_Charge_Grouping_Alphabetically.pdf">Offense Charge Grouping Alphabetically PDF</a>
+</body>
+
+</html>
